@@ -1,0 +1,71 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-frontend:
+    name: Build and Test Frontend
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'  # Adjust the version if necessary
+
+    - name: Install dependencies
+      working-directory: ./frontend/pasionger-frontend
+      run: npm install
+
+    - name: Build Angular project
+      working-directory: ./frontend/pasionger-frontend
+      run: npm run build
+
+    - name: Run Angular tests
+      working-directory: ./frontend/pasionger-frontend
+      run: npm test
+
+  build-backend:
+    name: Build and Test Backend
+    runs-on: ubuntu-latest
+    needs: build-frontend
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: '6.0.x'  # Adjust version based on your project requirements
+
+    - name: Restore dependencies
+      working-directory: ./backend/PasiongerBackend
+      run: dotnet restore
+
+    - name: Build .NET Core project
+      working-directory: ./backend/PasiongerBackend
+      run: dotnet build --configuration Release --no-restore
+
+    - name: Run .NET tests
+      working-directory: ./backend/PasiongerBackend
+      run: dotnet test --no-restore --verbosity normal
+
+  deploy:
+    name: Deploy Application
+    runs-on: ubuntu-latest
+    needs: [build-frontend, build-backend]
+
+    steps:
+    - name: Deploy your app (you can integrate deployment here)
+      run: echo "Deployment step goes here"
+      # Add your deployment commands here (e.g., to AWS, Firebase, etc.)
